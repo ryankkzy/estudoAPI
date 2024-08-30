@@ -1,4 +1,5 @@
 import express from "express";
+import cors from 'cors';
 
 const servidor = express();
 servidor.use(express.json());
@@ -30,18 +31,37 @@ servidor.get('/mensagem/ocupado' , (req,resp) => {
 
 
 
-
 servidor.get('/mensagem/ocupado/recado' , (req,resp) => {
     resp.send('Estou ocupado manda msg que dps eu vejo...')
 })
 
 
 servidor.get('/calculadora/somar/:n1/:n2' , (req,resp) => {
+    //validacao
+
+    if(isNaN (req.params.n1) || isNaN(req.params.n2)){
+        resp.status(400).send({
+            erro: 'Os parametros devem ser numeros!'
+        })
+
+       return;
+    }
+
+
+
+
     let n1 = Number(req.params.n1);
     let n2 = Number(req.params.n2);
     let soma = n1 + n2;
 
-    resp.send('A soma é ' + soma)
+    resp.send({
+        entradas: {
+            numero1: n1,
+            numero2: n2
+        },
+
+        soma: soma
+    })
 })
 
 
@@ -84,9 +104,20 @@ servidor.get('/calculadora/somar2' , (req,resp) => {
 
 
 servidor.get('/mensagem/ola' , (req,resp) => {
+    if(req.query.nome == undefined || req.query.nome == null){
+        resp.status(400).send({
+            erro: 'O parametro query é obrigatório!'
+        })
+
+        return;
+    }
+
+
     let nomePessoa = req.query.nome ?? 'parça';
 
-    resp.send('Olá ' + nomePessoa)
+    resp.send({
+        mensagem: 'Olá ' + nomePessoa
+    })
 })
 
 
@@ -113,10 +144,55 @@ servidor.post('/dobros' , (req, resp) => {
         nums2[i] = nums[i] * 2
     }
 
-    resp.send('Os dobros do numeros são: ' + nums2)
+    resp.send('Os dobros dos numeros são: ' + nums2)
 })
 
 
+
+servidor.post('/loja/pedido' , (req,resp) => {
+    let total = req.body.total;
+    let parcelas = req.body.parcelas;
+    let cupom = req.query.cupom;
+
+    if(parcelas > 1) {
+        let juros = total * 0.05
+        total += juros
+    }
+
+    if(cupom == 'QUERO100'){
+        total -= 100
+    }
+
+    resp.send('O total do pedido ficou em R$ ' + total)
+})
+
+
+
+servidor.post('/loja/pedido/completo' , (req,resp) => {
+    let parcelas = req.body.parcelas;
+    let itens = req.body.itens;
+    let cupom = req.query.cupom;
+
+    let total = 0
+    for(let produto of itens){
+        total += produto.preço;
+    }
+
+
+    if(parcelas > 1){
+        let juros = total * 0.05;
+        total += juros
+    }
+
+    if(cupom == 'QUERO100'){
+        total -= 100
+    }
+
+
+
+    resp.send('O total a pagar é ' + total)
+
+})
 
 
 
